@@ -496,6 +496,93 @@ h1 {
   max-height: min(78vh, 640px);
 }
 
+.game-result-popup {
+  width: min(calc(100vw - 40px), 380px);
+}
+
+.game-result-dialog {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 30px 22px 22px;
+  text-align: center;
+
+  &--won {
+    --result-accent: #21a83a;
+    --result-surface: #effcf1;
+  }
+
+  &--lost {
+    --result-accent: #dc3c3c;
+    --result-surface: #fff2f2;
+  }
+
+  h2,
+  p {
+    margin: 0;
+  }
+}
+
+.game-result-dialog__icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--result-surface);
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--result-accent) 10%, transparent);
+  color: var(--result-accent);
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.game-result-dialog__eyebrow {
+  color: var(--result-accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.game-result-dialog h2 {
+  color: @color-text;
+  font-size: 24px;
+}
+
+.game-result-dialog__description {
+  color: @color-muted;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.game-result-dialog__answer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--result-surface);
+  color: @color-text;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.game-result-dialog__summary {
+  color: @color-muted;
+  font-size: 12px;
+}
+
+.game-result-dialog__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
+}
+
 .possible-combinations-dialog {
   display: flex;
   flex-direction: column;

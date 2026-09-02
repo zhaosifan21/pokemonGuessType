@@ -327,11 +327,51 @@
         </div>
       </section>
     </VanPopup>
+
+    <VanPopup
+      v-model:show="isGameResultVisible"
+      class="game-result-popup"
+      position="center"
+      round
+      :close-on-click-overlay="false"
+    >
+      <section
+        class="game-result-dialog"
+        :class="isGameWon ? 'game-result-dialog--won' : 'game-result-dialog--lost'"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="game-result-title"
+      >
+        <span class="game-result-dialog__icon" aria-hidden="true">
+          {{ isGameWon ? '✦' : '!' }}
+        </span>
+        <p class="game-result-dialog__eyebrow">
+          {{ isGameWon ? 'CHALLENGE COMPLETE' : 'GAME OVER' }}
+        </p>
+        <h2 id="game-result-title">{{ gameResultTitle }}</h2>
+        <p class="game-result-dialog__description">{{ gameResultDescription }}</p>
+        <div class="game-result-dialog__answer" aria-label="本局答案">
+          <span>答案</span>
+          <TypeBadge
+            v-for="typeName in hiddenDefenseTypes"
+            :key="typeName"
+            :type="getType(typeName)"
+          />
+        </div>
+        <p class="game-result-dialog__summary">
+          共攻击 {{ attackCount }} 次，猜测 {{ guessCount }} 次
+        </p>
+        <div class="game-result-dialog__actions">
+          <VanButton plain @click="closeGameResult">查看本局记录</VanButton>
+          <VanButton type="primary" @click="restartGame">再来一局</VanButton>
+        </div>
+      </section>
+    </VanPopup>
   </section>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import {
   Button as VanButton,
@@ -374,6 +414,7 @@ const {
 const selectedAttackName = ref('')
 const selectedGuessNames = ref([])
 const isPossibleCombinationsVisible = ref(false)
+const isGameResultVisible = ref(false)
 const typeByName = new Map(types.map((type) => [type.name, type]))
 const gridTypeNames = [
   'Normal',
@@ -446,6 +487,17 @@ const statusDescription = computed(() => {
   if (isGamePlaying.value) return '选择一种攻击属性，观察它对隐藏组合造成的倍率。'
   return '设定本局次数后，系统会随机生成一个隐藏属性组合。'
 })
+const isGameWon = computed(() => gameStatus.value === 'won')
+const gameResultTitle = computed(() => (isGameWon.value ? '挑战成功！' : '本局挑战失败'))
+const gameResultDescription = computed(() => {
+  if (isGameWon.value) return '你成功锁定了隐藏的防御属性组合。'
+  if (gameEndReason.value === 'abandoned') return '你已放弃本局，答案如下。'
+  return '猜测次数已经用尽，答案如下。'
+})
+
+watch(isGameFinished, (hasFinished) => {
+  isGameResultVisible.value = hasFinished
+})
 
 function resetSelections() {
   selectedAttackName.value = ''
@@ -455,7 +507,12 @@ function resetSelections() {
 
 function startGame() {
   resetSelections()
+  isGameResultVisible.value = false
   gameStore.initGame()
+}
+
+function restartGame() {
+  startGame()
 }
 
 function submitAttack() {
@@ -491,7 +548,12 @@ function abandonGame() {
 
 function exitGame() {
   resetSelections()
+  isGameResultVisible.value = false
   gameStore.exitGame()
+}
+
+function closeGameResult() {
+  isGameResultVisible.value = false
 }
 
 function getType(typeName) {
