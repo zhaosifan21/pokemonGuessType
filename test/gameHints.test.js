@@ -10,7 +10,7 @@ import {
   getHintTypeCount,
   getRecommendedAttackType,
 } from '../src/utils/gameHints.js'
-import { useGameStore } from '../src/stores/useGameStore.js'
+import { gameConfigStorageKey, useGameStore } from '../src/stores/useGameStore.js'
 
 function createSequenceRandom(...values) {
   let index = 0
@@ -31,6 +31,19 @@ function startGameStore({ attackLimit = 3, guessLimit = 3, showTextHints = true 
   store.initGame()
   store.hiddenDefenseTypes = ['Water']
   return store
+}
+
+function createMemoryStorage() {
+  const values = new Map()
+
+  return {
+    getItem(key) {
+      return values.get(key) ?? null
+    },
+    setItem(key, value) {
+      values.set(key, String(value))
+    },
+  }
 }
 
 test('攻击推荐选择期望排除组合数最高的属性', () => {
@@ -287,4 +300,53 @@ test('关闭提示、重复猜测和正确猜测均不会生成提示', () => {
   assert.equal(winningStore.gameStatus, 'won')
   assert.equal(winningStore.guessHintText, null)
   assert.equal(winningStore.attackHintText, null)
+})
+
+test('开始游戏后缓存配置，并在新的 store 中安全恢复', () => {
+  const originalWindowDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'window')
+  const storage = createMemoryStorage()
+
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: { localStorage: storage },
+  })
+
+  try {
+    setActivePinia(createPinia())
+    const store = useGameStore()
+    store.attackLimit = 12
+    store.guessLimit = 5
+    store.attackResultDisplayMode = attackResultDisplayModes.CHAMPIONS
+    store.allowPossibleCombinations = true
+    store.showTextHints = true
+    store.initGame()
+
+    assert.deepEqual(JSON.parse(storage.getItem(gameConfigStorageKey)), {
+      attackLimit: 12,
+      guessLimit: 5,
+      attackResultDisplayMode: attackResultDisplayModes.CHAMPIONS,
+      allowPossibleCombinations: true,
+      showTextHints: true,
+    })
+
+    setActivePinia(createPinia())
+    const restoredStore = useGameStore()
+    assert.equal(restoredStore.attackLimit, 12)
+    assert.equal(restoredStore.guessLimit, 5)
+    assert.equal(restoredStore.attackResultDisplayMode, attackResultDisplayModes.CHAMPIONS)
+    assert.equal(restoredStore.allowPossibleCombinations, true)
+    assert.equal(restoredStore.showTextHints, true)
+
+    storage.setItem(gameConfigStorageKey, '{not-valid-json')
+    setActivePinia(createPinia())
+    const fallbackStore = useGameStore()
+    assert.equal(fallbackStore.attackLimit, 6)
+    assert.equal(fallbackStore.guessLimit, 3)
+  } finally {
+    if (originalWindowDescriptor) {
+      Object.defineProperty(globalThis, 'window', originalWindowDescriptor)
+    } else {
+      delete globalThis.window
+    }
+  }
 })

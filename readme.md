@@ -16,6 +16,7 @@
 - 支持“常规模式”“宝可梦冠军模式”和“直接显示倍率”三种攻击结果显示模式。
 - 可选查看当前攻击和猜测记录下仍然合理的属性组合。
 - 可选开启智能文字提示，在攻击或猜测次数即将耗尽时给出基于剩余合理组合的建议。
+- 每次开始游戏后自动保存本局配置；重新进入页面时会恢复上一次已开始游戏的配置。
 - 支持退出游戏、放弃游戏和结束后重新开始。
 - 属性标签统一使用图标、属性背景色和中文名称展示。
 
@@ -140,7 +141,7 @@ pokemon-game/
 
 Pinia Setup Store，主要包含：
 
-- 配置：`attackLimit`、`guessLimit`、`attackResultDisplayMode`、`allowPossibleCombinations`。
+- 配置：`attackLimit`、`guessLimit`、`attackResultDisplayMode`、`allowPossibleCombinations`、`showTextHints`；开始游戏后会同步至 localStorage。
 - 局内状态：攻击次数、猜测次数、攻击记录、猜测记录、隐藏答案、游戏状态和结束原因。
 - 操作：`initGame()`、`attack()`、`submitGuess()`、`abandonGame()`、`exitGame()`。
 

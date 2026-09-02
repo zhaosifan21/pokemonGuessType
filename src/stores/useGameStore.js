@@ -16,6 +16,7 @@ import { getPossibleTypeCombinations } from '../utils/typePossibilities.js'
 import { createAttackHintText, createGuessHintText } from '../utils/gameHints.js'
 
 const allTypeNames = types.map((type) => type.name)
+export const gameConfigStorageKey = 'pokemon-guess-type:game-config'
 
 export const useGameStore = defineStore('game', () => {
   const attackLimit = ref(6)
@@ -50,8 +51,64 @@ export const useGameStore = defineStore('game', () => {
     return Math.min(99, Math.max(1, Math.floor(parsedValue)))
   }
 
+  function getLocalStorage() {
+    if (typeof window === 'undefined') return null
+
+    try {
+      return window.localStorage
+    } catch {
+      return null
+    }
+  }
+
+  function restoreGameConfig() {
+    const storage = getLocalStorage()
+    if (!storage) return
+
+    try {
+      const storedValue = storage.getItem(gameConfigStorageKey)
+      if (!storedValue) return
+
+      const config = JSON.parse(storedValue)
+      if (!config || typeof config !== 'object' || Array.isArray(config)) return
+
+      attackLimit.value = Math.min(
+        18,
+        Math.max(3, normalizeLimit(config.attackLimit, attackLimit.value)),
+      )
+      guessLimit.value = normalizeLimit(config.guessLimit, guessLimit.value)
+      attackResultDisplayMode.value = normalizeAttackResultDisplayMode(
+        config.attackResultDisplayMode,
+      )
+      allowPossibleCombinations.value = config.allowPossibleCombinations === true
+      showTextHints.value = config.showTextHints === true
+    } catch {
+      // localStorage 可能被禁用、配额耗尽或包含损坏数据，此时保留默认配置。
+    }
+  }
+
+  function saveGameConfig() {
+    const storage = getLocalStorage()
+    if (!storage) return
+
+    try {
+      storage.setItem(
+        gameConfigStorageKey,
+        JSON.stringify({
+          attackLimit: attackLimit.value,
+          guessLimit: guessLimit.value,
+          attackResultDisplayMode: attackResultDisplayMode.value,
+          allowPossibleCombinations: allowPossibleCombinations.value,
+          showTextHints: showTextHints.value,
+        }),
+      )
+    } catch {
+      // 缓存不可用不应阻止玩家开始游戏。
+    }
+  }
+
   function initGame() {
-    attackLimit.value = normalizeLimit(attackLimit.value, 6)
+    attackLimit.value = Math.min(18, Math.max(3, normalizeLimit(attackLimit.value, 6)))
     guessLimit.value = normalizeLimit(guessLimit.value, 3)
     attackResultDisplayMode.value = normalizeAttackResultDisplayMode(attackResultDisplayMode.value)
     allowPossibleCombinations.value = allowPossibleCombinations.value === true
@@ -66,6 +123,7 @@ export const useGameStore = defineStore('game', () => {
     clearGameHints()
     gameEndReason.value = null
     gameStatus.value = 'playing'
+    saveGameConfig()
   }
 
   function endGameAsLostWhenGuessesExhausted() {
@@ -208,6 +266,8 @@ export const useGameStore = defineStore('game', () => {
     gameEndReason.value = null
     gameStatus.value = 'idle'
   }
+
+  restoreGameConfig()
 
   return {
     attackLimit,
