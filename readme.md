@@ -57,6 +57,39 @@ pnpm format
 pnpm format:check
 ```
 
+## 打包 Android 调试 APK
+
+项目已包含 Cordova 工程。首次打包前需要安装 Cordova、JDK 17、Android SDK（Android 36 与 Build Tools 36.0.0）和 Gradle 8.14.2；Android SDK 默认使用 `D:\azb\android-sdk`。
+
+以下命令在 PowerShell 中执行。先用相对资源路径构建网页，并同步到 Cordova：
+
+```powershell
+node .\node_modules\vite\bin\vite.js build --base ./
+Copy-Item .\dist\* .\cordova\www -Recurse -Force
+```
+
+再配置当前会话的构建环境并生成 APK：
+
+```powershell
+$socketTemp = 'D:\azb\java-sockets'
+New-Item -ItemType Directory -Force -Path $socketTemp | Out-Null
+$env:TEMP = $socketTemp
+$env:TMP = $socketTemp
+$env:JAVA_TOOL_OPTIONS = "-Djdk.net.unixdomain.tmpdir=$socketTemp -Djava.io.tmpdir=$socketTemp"
+$env:JAVA_HOME = 'C:\Program Files\Microsoft\jdk-17.0.20.101-hotspot'
+$env:ANDROID_HOME = 'D:\azb\android-sdk'
+$env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
+$env:PATH = "$env:JAVA_HOME\bin;$env:ANDROID_HOME\platform-tools;$env:PATH"
+
+Set-Location .\cordova
+cordova prepare android
+cordova build android --debug
+New-Item -ItemType Directory -Force -Path ..\artifacts | Out-Null
+Copy-Item .\platforms\android\app\build\outputs\apk\debug\app-debug.apk ..\artifacts\pokemon-guess-type-debug.apk -Force
+```
+
+生成文件为 `artifacts/pokemon-guess-type-debug.apk`，该目录已加入 `.gitignore`。`JAVA_TOOL_OPTIONS` 用于修复部分 Windows 环境中 JDK 的本地 socket 临时目录错误，只影响当前 PowerShell 会话。
+
 ## 项目结构
 
 ```text
