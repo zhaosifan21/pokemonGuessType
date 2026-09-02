@@ -1,0 +1,254 @@
+[
+  {
+    "color": "#9fa19f",
+    "name": "Normal",
+    "nameCHS": "一般",
+    "nameCHT": "一般",
+    "icon": {
+      "index": 0,
+      "x": 0,
+      "y": 0,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 0"
+    }
+  },
+  {
+    "color": "#ff8000",
+    "name": "Fighting",
+    "nameCHS": "格斗",
+    "nameCHT": "格鬥",
+    "icon": {
+      "index": 1,
+      "x": 0,
+      "y": 50,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -50px"
+    }
+  },
+  {
+    "color": "#81b9ef",
+    "name": "Flying",
+    "nameCHS": "飞行",
+    "nameCHT": "飛行",
+    "icon": {
+      "index": 2,
+      "x": 0,
+      "y": 100,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -100px"
+    }
+  },
+  {
+    "color": "#9141cb",
+    "name": "Poison",
+    "nameCHS": "毒",
+    "nameCHT": "毒",
+    "icon": {
+      "index": 3,
+      "x": 0,
+      "y": 150,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -150px"
+    }
+  },
+  {
+    "color": "#915121",
+    "name": "Ground",
+    "nameCHS": "地面",
+    "nameCHT": "地面",
+    "icon": {
+      "index": 4,
+      "x": 0,
+      "y": 200,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -200px"
+    }
+  },
+  {
+    "color": "#afa981",
+    "name": "Rock",
+    "nameCHS": "岩石",
+    "nameCHT": "岩石",
+    "icon": {
+      "index": 5,
+      "x": 0,
+      "y": 250,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -250px"
+    }
+  },
+  {
+    "color": "#91a119",
+    "name": "Bug",
+    "nameCHS": "虫",
+    "nameCHT": "蟲",
+    "icon": {
+      "index": 6,
+      "x": 0,
+      "y": 300,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -300px"
+    }
+  },
+  {
+    "color": "#704170",
+    "name": "Ghost",
+    "nameCHS": "幽灵",
+    "nameCHT": "幽靈",
+    "icon": {
+      "index": 7,
+      "x": 0,
+      "y": 350,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -350px"
+    }
+  },
+  {
+    "color": "#60a1b8",
+    "name": "Steel",
+    "nameCHS": "钢",
+    "nameCHT": "鋼",
+    "icon": {
+      "index": 8,
+      "x": 0,
+      "y": 400,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -400px"
+    }
+  },
+  {
+    "color": "#e62829",
+    "name": "Fire",
+    "nameCHS": "火",
+    "nameCHT": "火",
+    "icon": {
+      "index": 9,
+      "x": 0,
+      "y": 450,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -450px"
+    }
+  },
+  {
+    "color": "#2980ef",
+    "name": "Water",
+    "nameCHS": "水",
+    "nameCHT": "水",
+    "icon": {
+      "index": 10,
+      "x": 0,
+      "y": 500,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -500px"
+    }
+  },
+  {
+    "color": "#3fa129",
+    "name": "Grass",
+    "nameCHS": "草",
+    "nameCHT": "草",
+    "icon": {
+      "index": 11,
+      "x": 0,
+      "y": 550,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -550px"
+    }
+  },
+  {
+    "color": "#fac000",
+    "name": "Electric",
+    "nameCHS": "电",
+    "nameCHT": "電",
+    "icon": {
+      "index": 12,
+      "x": 0,
+      "y": 600,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -600px"
+    }
+  },
+  {
+    "color": "#ef4179",
+    "name": "Psychic",
+    "nameCHS": "超能",
+    "nameCHT": "超能力",
+    "icon": {
+      "index": 13,
+      "x": 0,
+      "y": 650,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -650px"
+    }
+  },
+  {
+    "color": "#3fd8ff",
+    "name": "Ice",
+    "nameCHS": "冰",
+    "nameCHT": "冰",
+    "icon": {
+      "index": 14,
+      "x": 0,
+      "y": 700,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -700px"
+    }
+  },
+  {
+    "color": "#5060e1",
+    "name": "Dragon",
+    "nameCHS": "龙",
+    "nameCHT": "龍",
+    "icon": {
+      "index": 15,
+      "x": 0,
+      "y": 750,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -750px"
+    }
+  },
+  {
+    "color": "#50413f",
+    "name": "Dark",
+    "nameCHS": "恶",
+    "nameCHT": "惡",
+    "icon": {
+      "index": 16,
+      "x": 0,
+      "y": 800,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -800px"
+    }
+  },
+  {
+    "color": "#ee70ef",
+    "name": "Fairy",
+    "nameCHS": "妖精",
+    "nameCHT": "妖精",
+    "icon": {
+      "index": 17,
+      "x": 0,
+      "y": 850,
+      "width": 50,
+      "height": 50,
+      "backgroundPosition": "0 -850px"
+    }
+  }
+]
