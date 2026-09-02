@@ -15,7 +15,7 @@
       <div class="limit-grid">
         <label class="limit-field" for="attack-limit">
           <span>攻击次数</span>
-          <VanStepper id="attack-limit" v-model="attackLimit" :min="3" :max="99" />
+          <VanStepper id="attack-limit" v-model="attackLimit" :min="3" :max="18" />
         </label>
         <label class="limit-field" for="guess-limit">
           <span>猜测次数</span>
@@ -147,19 +147,35 @@
         </div>
         <span class="remaining-count">剩余 {{ remainingAttacks }} 次</span>
       </div>
+      <p class="restriction-notice" role="note">
+        <strong>禁止重复攻击</strong>
+        <span>同一局中，每种攻击属性只能使用一次；已使用的属性会被锁定。</span>
+      </p>
       <div class="type-grid" role="list" aria-label="攻击属性列表">
         <button
           v-for="type in gridTypes"
           :key="type.name"
           class="type-choice"
-          :class="{ 'type-choice--selected': selectedAttackName === type.name }"
+          :class="{
+            'type-choice--selected': selectedAttackName === type.name,
+            'type-choice--disabled': gameStore.isAttackTypeUsed(type.name),
+          }"
           :style="{ '--type-color': type.color }"
           type="button"
+          :disabled="gameStore.isAttackTypeUsed(type.name)"
           :aria-pressed="selectedAttackName === type.name"
+          :aria-label="
+            gameStore.isAttackTypeUsed(type.name)
+              ? `${type.nameCHS}属性，本局已使用`
+              : `${type.nameCHS}属性`
+          "
           @click="selectedAttackName = type.name"
         >
           <TypeIcon :type="type" :size="20" />
           <span>{{ type.nameCHS }}</span>
+          <small v-if="gameStore.isAttackTypeUsed(type.name)" class="type-choice__state">
+            已使用
+          </small>
         </button>
       </div>
       <div class="action-row">
@@ -186,6 +202,20 @@
         <span class="remaining-count">可选 {{ selectedGuessNames.length }} / 2</span>
       </div>
       <p class="section-hint">选择一个或两个属性；双属性的顺序不影响答案。</p>
+      <p
+        class="restriction-notice"
+        :class="{ 'restriction-notice--active': isSelectedGuessRepeated }"
+        aria-live="polite"
+      >
+        <strong>{{ isSelectedGuessRepeated ? '该组合已经猜过' : '禁止重复猜测' }}</strong>
+        <span>
+          {{
+            isSelectedGuessRepeated
+              ? '请更换属性组合后再提交；双属性前后颠倒仍视为同一种组合。'
+              : '已经提交过的组合不能再次猜测；双属性前后颠倒也算同一种组合。'
+          }}
+        </span>
+      </p>
       <div class="type-grid" role="list" aria-label="猜测属性列表">
         <button
           v-for="type in gridTypes"
@@ -362,10 +392,23 @@ const possibleDualTypeCombinations = computed(() =>
   possibleTypeCombinations.value.filter((combination) => combination.length === 2),
 )
 const canSubmitAttack = computed(
-  () => isGamePlaying.value && Boolean(selectedAttack.value) && remainingAttacks.value > 0,
+  () =>
+    isGamePlaying.value &&
+    Boolean(selectedAttack.value) &&
+    !gameStore.isAttackTypeUsed(selectedAttackName.value) &&
+    remainingAttacks.value > 0,
+)
+const isSelectedGuessRepeated = computed(
+  () =>
+    selectedGuessNames.value.length > 0 &&
+    gameStore.hasGuessedTypeCombination(selectedGuessNames.value),
 )
 const canSubmitGuess = computed(
-  () => isGamePlaying.value && selectedGuessNames.value.length > 0 && remainingGuesses.value > 0,
+  () =>
+    isGamePlaying.value &&
+    selectedGuessNames.value.length > 0 &&
+    !isSelectedGuessRepeated.value &&
+    remainingGuesses.value > 0,
 )
 const statusTitle = computed(() => {
   if (gameStatus.value === 'won') return '猜对了！'
@@ -402,8 +445,8 @@ function startGame() {
 function submitAttack() {
   if (!canSubmitAttack.value) return
 
-  gameStore.attack(selectedAttackName.value)
-  selectedAttackName.value = ''
+  const result = gameStore.attack(selectedAttackName.value)
+  if (result) selectedAttackName.value = ''
 }
 
 function toggleGuess(typeName) {
@@ -421,8 +464,8 @@ function toggleGuess(typeName) {
 function submitGuess() {
   if (!canSubmitGuess.value) return
 
-  gameStore.submitGuess(selectedGuessNames.value)
-  selectedGuessNames.value = []
+  const result = gameStore.submitGuess(selectedGuessNames.value)
+  if (result) selectedGuessNames.value = []
 }
 
 function abandonGame() {

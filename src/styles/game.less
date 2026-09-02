@@ -380,6 +380,27 @@ h1 {
   color: @color-muted;
   font-size: 13px;
 }
+.restriction-notice {
+  display: grid;
+  gap: 3px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid #f0a23b;
+  border-radius: 12px;
+  background: #fff7e8;
+  color: #8a4700;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.restriction-notice strong {
+  font-size: 14px;
+}
+.restriction-notice--active {
+  border-color: #dc3c3c;
+  background: #fff0f0;
+  color: #b42323;
+  box-shadow: 0 0 0 3px rgba(220, 60, 60, 0.1);
+}
 .type-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -418,6 +439,14 @@ h1 {
   cursor: not-allowed;
   filter: grayscale(0.85);
   opacity: 0.4;
+}
+.type-choice__state {
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
 }
 .action-row {
   display: flex;

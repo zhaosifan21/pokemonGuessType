@@ -7,6 +7,7 @@ import {
 } from '../utils/attackResultDisplay.js'
 import {
   areTypeCombinationsEqual,
+  getTypeCombinationKey,
   getRandomTypeCombination,
   normalizeTypeCombination,
 } from '../utils/typeCombinations.js'
@@ -64,8 +65,32 @@ export const useGameStore = defineStore('game', () => {
     return false
   }
 
+  function normalizeAttackTypeName(typeName) {
+    return typeof typeName === 'string' ? typeName.trim().toLowerCase() : null
+  }
+
+  function isAttackTypeUsed(typeName) {
+    const normalizedTypeName = normalizeAttackTypeName(typeName)
+    if (!normalizedTypeName) return false
+
+    return attackHistory.value.some(
+      (attackRecord) =>
+        normalizeAttackTypeName(attackRecord.typeName) === normalizedTypeName,
+    )
+  }
+
+  function hasGuessedTypeCombination(typeNames) {
+    const combinationKey = getTypeCombinationKey(typeNames)
+    if (!combinationKey) return false
+
+    return guessHistory.value.some(
+      (guessRecord) => getTypeCombinationKey(guessRecord.types) === combinationKey,
+    )
+  }
+
   function attack(typeName) {
     if (!isGamePlaying.value || attackCount.value >= attackLimit.value) return null
+    if (isAttackTypeUsed(typeName)) return null
 
     const multiplier = getTypeMultiplier(typeName, hiddenDefenseTypes.value)
     if (multiplier === null) return null
@@ -89,6 +114,7 @@ export const useGameStore = defineStore('game', () => {
 
     const guessedTypes = normalizeTypeCombination(typeNames)
     if (!guessedTypes) return null
+    if (hasGuessedTypeCombination(guessedTypes)) return null
 
     const isCorrect = areTypeCombinationsEqual(guessedTypes, hiddenDefenseTypes.value)
     const result = {
@@ -148,6 +174,8 @@ export const useGameStore = defineStore('game', () => {
     isGameFinished,
     remainingAttacks,
     remainingGuesses,
+    isAttackTypeUsed,
+    hasGuessedTypeCombination,
     initGame,
     attack,
     submitGuess,
