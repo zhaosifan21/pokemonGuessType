@@ -278,12 +278,12 @@ h1 {
   gap: 10px;
 }
 
-.possible-combinations-field {
+.boolean-option-field {
   --van-radio-checked-icon-color: @color-primary;
 
   display: grid;
   gap: 10px;
-  margin: 4px 0 20px;
+  margin: 4px 0 0;
   padding: 0;
   border: 0;
 
@@ -292,10 +292,16 @@ h1 {
     font-size: 14px;
     font-weight: 700;
   }
-}
 
-.possible-combinations-field .van-radio-group {
-  gap: 20px;
+  .van-radio-group {
+    gap: 20px;
+  }
+
+  small {
+    color: @color-muted;
+    font-size: 12px;
+    line-height: 1.5;
+  }
 }
 
 .display-mode-option {
@@ -379,6 +385,24 @@ h1 {
   margin: -4px 0 14px;
   color: @color-muted;
   font-size: 13px;
+}
+.game-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, @color-primary 45%, #ffffff);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f1efff, #fff8db);
+  box-shadow: 0 7px 18px rgba(113, 103, 248, 0.12);
+  color: #42358f;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.game-hint strong {
+  flex: 0 0 auto;
+  color: @color-primary-dark;
 }
 .restriction-notice {
   display: grid;

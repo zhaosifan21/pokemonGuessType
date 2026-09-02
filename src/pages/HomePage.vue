@@ -57,12 +57,20 @@
           </VanRadio>
         </VanRadioGroup>
       </fieldset>
-      <fieldset class="possible-combinations-field">
+      <fieldset class="boolean-option-field">
         <legend class="mb-10">允许查看合理的属性组合</legend>
         <VanRadioGroup v-model="allowPossibleCombinations" direction="horizontal">
           <VanRadio :name="true">是</VanRadio>
           <VanRadio :name="false">否</VanRadio>
         </VanRadioGroup>
+      </fieldset>
+      <fieldset class="boolean-option-field">
+        <legend class="mb-10">显示文字提示</legend>
+        <VanRadioGroup v-model="showTextHints" direction="horizontal">
+          <VanRadio :name="true">是</VanRadio>
+          <VanRadio :name="false">否</VanRadio>
+        </VanRadioGroup>
+        <small>游戏将在您的次数快耗尽时给予帮助提示。</small>
       </fieldset>
       <VanButton type="primary" block @click="startGame">
         {{ isGameFinished ? '再来一局' : '开始游戏' }}
@@ -147,6 +155,10 @@
         </div>
         <span class="remaining-count">剩余 {{ remainingAttacks }} 次</span>
       </div>
+      <p v-if="attackHintText" class="game-hint" role="status">
+        <strong>提示：</strong>
+        <span>{{ attackHintText }}</span>
+      </p>
       <p class="restriction-notice" role="note">
         <strong>禁止重复攻击</strong>
         <span>同一局中，每种攻击属性只能使用一次；已使用的属性会被锁定。</span>
@@ -201,6 +213,10 @@
         </div>
         <span class="remaining-count">可选 {{ selectedGuessNames.length }} / 2</span>
       </div>
+      <p v-if="guessHintText" class="game-hint" role="status">
+        <strong>提示：</strong>
+        <span>{{ guessHintText }}</span>
+      </p>
       <p class="section-hint">选择一个或两个属性；双属性的顺序不影响答案。</p>
       <p
         class="restriction-notice"
@@ -329,7 +345,6 @@ import TypeBadge from '../components/TypeBadge.vue'
 import TypeIcon from '../components/TypeIcon.vue'
 import { useGameStore } from '../stores/useGameStore'
 import { getAttackResultText } from '../utils/attackResultDisplay.js'
-import { getPossibleTypeCombinations } from '../utils/typePossibilities.js'
 
 const gameStore = useGameStore()
 const {
@@ -337,6 +352,7 @@ const {
   guessLimit,
   attackResultDisplayMode,
   allowPossibleCombinations,
+  showTextHints,
   attackCount,
   guessCount,
   hiddenDefenseTypes,
@@ -344,12 +360,15 @@ const {
   guessHistory,
   lastAttack,
   lastAction,
+  attackHintText,
+  guessHintText,
   gameEndReason,
   gameStatus,
   isGamePlaying,
   isGameFinished,
   remainingAttacks,
   remainingGuesses,
+  possibleTypeCombinations,
 } = storeToRefs(gameStore)
 
 const selectedAttackName = ref('')
@@ -381,9 +400,6 @@ const gridTypes = gridTypeNames.map((typeName) => typeByName.get(typeName))
 const selectedAttack = computed(() => typeByName.get(selectedAttackName.value) ?? null)
 const selectedGuessTypes = computed(() =>
   selectedGuessNames.value.map((typeName) => typeByName.get(typeName)),
-)
-const possibleTypeCombinations = computed(() =>
-  getPossibleTypeCombinations(attackHistory.value, guessHistory.value),
 )
 const possibleSingleTypeCombinations = computed(() =>
   possibleTypeCombinations.value.filter((combination) => combination.length === 1),

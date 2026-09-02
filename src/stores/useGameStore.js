@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
+import types from '../assets/json/types.json' with { type: 'json' }
 import { getTypeMultiplier } from '../utils/typeEffectiveness.js'
 import {
   attackResultDisplayModes,
@@ -11,12 +12,17 @@ import {
   getRandomTypeCombination,
   normalizeTypeCombination,
 } from '../utils/typeCombinations.js'
+import { getPossibleTypeCombinations } from '../utils/typePossibilities.js'
+import { createAttackHintText, createGuessHintText } from '../utils/gameHints.js'
+
+const allTypeNames = types.map((type) => type.name)
 
 export const useGameStore = defineStore('game', () => {
   const attackLimit = ref(6)
   const guessLimit = ref(3)
   const attackResultDisplayMode = ref(attackResultDisplayModes.NORMAL)
   const allowPossibleCombinations = ref(false)
+  const showTextHints = ref(false)
   const attackCount = ref(0)
   const guessCount = ref(0)
   const hiddenDefenseTypes = ref([])
@@ -24,6 +30,8 @@ export const useGameStore = defineStore('game', () => {
   const guessHistory = ref([])
   const lastAttack = ref(null)
   const lastAction = ref(null)
+  const attackHintText = ref(null)
+  const guessHintText = ref(null)
   const gameEndReason = ref(null)
   const gameStatus = ref('idle')
 
@@ -31,6 +39,9 @@ export const useGameStore = defineStore('game', () => {
   const isGameFinished = computed(() => ['won', 'lost'].includes(gameStatus.value))
   const remainingAttacks = computed(() => Math.max(0, attackLimit.value - attackCount.value))
   const remainingGuesses = computed(() => Math.max(0, guessLimit.value - guessCount.value))
+  const possibleTypeCombinations = computed(() =>
+    getPossibleTypeCombinations(attackHistory.value, guessHistory.value),
+  )
 
   function normalizeLimit(value, fallback) {
     const parsedValue = Number(value)
@@ -44,6 +55,7 @@ export const useGameStore = defineStore('game', () => {
     guessLimit.value = normalizeLimit(guessLimit.value, 3)
     attackResultDisplayMode.value = normalizeAttackResultDisplayMode(attackResultDisplayMode.value)
     allowPossibleCombinations.value = allowPossibleCombinations.value === true
+    showTextHints.value = showTextHints.value === true
     attackCount.value = 0
     guessCount.value = 0
     hiddenDefenseTypes.value = getRandomTypeCombination()
@@ -51,6 +63,7 @@ export const useGameStore = defineStore('game', () => {
     guessHistory.value = []
     lastAttack.value = null
     lastAction.value = null
+    clearGameHints()
     gameEndReason.value = null
     gameStatus.value = 'playing'
   }
@@ -59,10 +72,43 @@ export const useGameStore = defineStore('game', () => {
     if (guessCount.value >= guessLimit.value) {
       gameEndReason.value = 'guesses-exhausted'
       gameStatus.value = 'lost'
+      clearGameHints()
       return true
     }
 
     return false
+  }
+
+  function clearGameHints() {
+    attackHintText.value = null
+    guessHintText.value = null
+  }
+
+  function updateAttackHint() {
+    const availableAttackTypeNames = allTypeNames.filter((typeName) => !isAttackTypeUsed(typeName))
+
+    attackHintText.value = createAttackHintText({
+      possibleCombinations: possibleTypeCombinations.value,
+      availableAttackTypeNames,
+      displayMode: attackResultDisplayMode.value,
+    })
+  }
+
+  function updateHintsAfterIncorrectGuess() {
+    if (!showTextHints.value || !isGamePlaying.value) return
+
+    if (remainingAttacks.value === 1) updateAttackHint()
+
+    const guessHintTriggerCount = Math.floor(guessLimit.value / 2)
+    if (
+      guessLimit.value > 1 &&
+      remainingGuesses.value === guessHintTriggerCount &&
+      !guessHintText.value
+    ) {
+      guessHintText.value = createGuessHintText({
+        possibleCombinations: possibleTypeCombinations.value,
+      })
+    }
   }
 
   function normalizeAttackTypeName(typeName) {
@@ -74,8 +120,7 @@ export const useGameStore = defineStore('game', () => {
     if (!normalizedTypeName) return false
 
     return attackHistory.value.some(
-      (attackRecord) =>
-        normalizeAttackTypeName(attackRecord.typeName) === normalizedTypeName,
+      (attackRecord) => normalizeAttackTypeName(attackRecord.typeName) === normalizedTypeName,
     )
   }
 
@@ -105,6 +150,11 @@ export const useGameStore = defineStore('game', () => {
     lastAttack.value = result
     lastAction.value = { kind: 'attack', ...result }
     attackHistory.value.push(result)
+    attackHintText.value = null
+
+    if (showTextHints.value && remainingGuesses.value === 1 && remainingAttacks.value > 0) {
+      updateAttackHint()
+    }
 
     return result
   }
@@ -129,7 +179,8 @@ export const useGameStore = defineStore('game', () => {
     if (isCorrect) {
       gameEndReason.value = 'guessed-correctly'
       gameStatus.value = 'won'
-    } else endGameAsLostWhenGuessesExhausted()
+      clearGameHints()
+    } else if (!endGameAsLostWhenGuessesExhausted()) updateHintsAfterIncorrectGuess()
 
     return result
   }
@@ -140,6 +191,7 @@ export const useGameStore = defineStore('game', () => {
     gameEndReason.value = 'abandoned'
     lastAction.value = { kind: 'abandon' }
     gameStatus.value = 'lost'
+    clearGameHints()
 
     return true
   }
@@ -152,6 +204,7 @@ export const useGameStore = defineStore('game', () => {
     guessHistory.value = []
     lastAttack.value = null
     lastAction.value = null
+    clearGameHints()
     gameEndReason.value = null
     gameStatus.value = 'idle'
   }
@@ -161,6 +214,7 @@ export const useGameStore = defineStore('game', () => {
     guessLimit,
     attackResultDisplayMode,
     allowPossibleCombinations,
+    showTextHints,
     attackCount,
     guessCount,
     hiddenDefenseTypes,
@@ -168,12 +222,15 @@ export const useGameStore = defineStore('game', () => {
     guessHistory,
     lastAttack,
     lastAction,
+    attackHintText,
+    guessHintText,
     gameEndReason,
     gameStatus,
     isGamePlaying,
     isGameFinished,
     remainingAttacks,
     remainingGuesses,
+    possibleTypeCombinations,
     isAttackTypeUsed,
     hasGuessedTypeCombination,
     initGame,
