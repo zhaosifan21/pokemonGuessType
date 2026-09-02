@@ -28,9 +28,8 @@
 - Pinia：游戏局内状态管理。
 - Vant：开源移动端优先 UI 组件库，提供按钮、单选、弹窗、步进器等基础交互组件。
 - Less：全局变量、页面样式和响应式样式组织。
-- PostCSS、`postcss-px2rem`、`px2rem-loader`：屏幕适配。
+- PostCSS、`px2rem`：屏幕适配。
 - ESLint、Prettier：代码检查和格式化。
-- `dayjs`：日期时间工具依赖，供后续功能扩展使用。
 
 ## 快速开始
 
@@ -61,34 +60,30 @@ pnpm format:check
 
 项目已包含 Cordova 工程。首次打包前需要安装 Cordova、JDK 17、Android SDK（Android 36 与 Build Tools 36.0.0）和 Gradle 8.14.2；Android SDK 默认使用 `D:\azb\android-sdk`。
 
-以下命令在 PowerShell 中执行。先用相对资源路径构建网页，并同步到 Cordova：
+在仓库根目录通过 PowerShell 执行：
 
 ```powershell
-node .\node_modules\vite\bin\vite.js build --base ./
-Copy-Item .\dist\* .\cordova\www -Recurse -Force
+npm run build:apk
 ```
 
-再配置当前会话的构建环境并生成 APK：
+脚本会依次执行 Web 生产构建、清理并同步 `cordova/www`、准备 Cordova Android 工程、执行 Debug 构建，并根据 `cordova/config.xml` 的版本号输出 APK。当前默认工具路径如下：
+
+- JDK 17：`C:\Program Files\Microsoft\jdk-17.0.20.101-hotspot`
+- Android SDK：`D:\azb\android-sdk`
+- Gradle：`D:\azb\gradle-8.14.2`
+- Gradle 分发包：`D:\azb\gradle-8.14.2-bin.zip`
+
+如果工具安装在其他目录，可覆盖参数：
 
 ```powershell
-$socketTemp = 'D:\azb\java-sockets'
-New-Item -ItemType Directory -Force -Path $socketTemp | Out-Null
-$env:TEMP = $socketTemp
-$env:TMP = $socketTemp
-$env:JAVA_TOOL_OPTIONS = "-Djdk.net.unixdomain.tmpdir=$socketTemp -Djava.io.tmpdir=$socketTemp"
-$env:JAVA_HOME = 'C:\Program Files\Microsoft\jdk-17.0.20.101-hotspot'
-$env:ANDROID_HOME = 'D:\azb\android-sdk'
-$env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
-$env:PATH = "$env:JAVA_HOME\bin;$env:ANDROID_HOME\platform-tools;$env:PATH"
-
-Set-Location .\cordova
-cordova prepare android
-cordova build android --debug
-New-Item -ItemType Directory -Force -Path ..\artifacts | Out-Null
-Copy-Item .\platforms\android\app\build\outputs\apk\debug\app-debug.apk ..\artifacts\pokemon-guess-type-debug.apk -Force
+powershell -ExecutionPolicy Bypass -File .\scripts\build-apk.ps1 `
+  -JavaHome 'C:\path\to\jdk-17' `
+  -AndroidSdk 'D:\path\to\android-sdk' `
+  -GradleHome 'D:\path\to\gradle-8.14.2' `
+  -GradleZip 'D:\path\to\gradle-8.14.2-bin.zip'
 ```
 
-生成文件为 `artifacts/pokemon-guess-type-debug.apk`，该目录已加入 `.gitignore`。`JAVA_TOOL_OPTIONS` 用于修复部分 Windows 环境中 JDK 的本地 socket 临时目录错误，只影响当前 PowerShell 会话。
+生成文件为 `artifacts/pokemon-guess-type-<版本号>-debug.apk`，该目录已加入 `.gitignore`。发布新版本前只需更新 `cordova/config.xml` 中的版本号，再执行脚本。脚本设置的 Java socket 临时目录和环境变量只影响当前 PowerShell 进程。
 
 ## 项目结构
 
@@ -166,7 +161,7 @@ pokemon-game/
 
 ### 6. 智能文字提示
 
-开启“显示文字提示”后，错误猜测发生在次数即将耗尽的节点时，游戏会根据当前剩余合理组合给出帮助。当猜测机会只剩一次时，每次攻击完成后只要还有攻击次数，也会继续推荐下一种攻击属性。攻击建议会计算各个未使用攻击属性的期望排除组合数；猜测建议会提示不可能出现或出现频率较高的属性。算法只使用玩家已经获得的攻击与猜测记录，不读取本局隐藏答案。
+开启“显示文字提示”后，错误猜测发生在次数即将耗尽的节点时，游戏会根据当前剩余合理组合给出帮助。攻击次数只剩一次时，倒数第二次攻击结束后会生成攻击建议，并持续显示到本局结束；后续猜测不会影响该提示。攻击建议会计算各个未使用攻击属性的期望排除组合数；猜测建议会提示不可能出现或出现频率较高的属性。算法只使用玩家已经获得的攻击与猜测记录，不读取本局隐藏答案。
 
 ## 核心模块
 

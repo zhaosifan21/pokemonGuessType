@@ -2,4 +2,8 @@ node_modules/
 .idea/
 .vscode/
 dist/
+dist.zip
 artifacts/
+cordova/platforms/
+cordova/plugins/
+cordova/www/

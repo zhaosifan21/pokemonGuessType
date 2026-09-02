@@ -13,10 +13,15 @@ const attackHintTemplates = [
 ]
 
 const avoidHintTemplates = [
-  (typeNames) => `先别考虑${formatTypeList(typeNames, '和')}啦。`,
-  (typeNames) => `${formatTypeList(typeNames, '和')}看起来不太可能出现。`,
-  (typeNames) => `可以暂时排除${formatTypeList(typeNames, '和')}。`,
-  (typeNames) => `别再猜${formatTypeList(typeNames, '和')}啦。`,
+  (typeNames) => `先把${formatTypeList(typeNames, '和')}排除在外吧。`,
+  (typeNames) => `${formatTypeList(typeNames, '和')}看起来不太可能是防御属性。`,
+  (typeNames) => `这次可以不考虑${formatTypeList(typeNames, '和')}。`,
+]
+
+const avoidRepeatedHintTemplates = [
+  (typeNames) =>
+    `你已经试过${formatTypeList(typeNames, '和')}了，先别再选${getTypePronoun(typeNames)}吧。`,
+  (typeNames) => `${formatTypeList(typeNames, '和')}已经猜过，接下来换个方向试试。`,
 ]
 
 const preferHintTemplates = [
@@ -75,6 +80,10 @@ function formatTypeList(typeNames, conjunction) {
   if (labels.length === 2) return labels.join(conjunction)
 
   return `${labels.slice(0, -1).join('、')}${conjunction}${labels.at(-1)}`
+}
+
+function getTypePronoun(typeNames) {
+  return typeNames.length === 1 ? '它' : '它们'
 }
 
 /** 计算一次攻击在所有当前候选答案下，平均能够排除多少个候选组合。 */
@@ -211,7 +220,18 @@ export function createGuessHintText(options = {}) {
   const recommendation = getGuessTypeRecommendation({ ...options, random })
   if (!recommendation?.typeNames.length) return null
 
-  const templates = recommendation.kind === 'avoid' ? avoidHintTemplates : preferHintTemplates
+  const guessedTypeNames = new Set(
+    (options.previouslyGuessedTypeNames ?? []).map(normalizeTypeName).filter(Boolean),
+  )
+  const hasTriedEveryAvoidedType = recommendation.typeNames.every((typeName) =>
+    guessedTypeNames.has(typeName),
+  )
+  const templates =
+    recommendation.kind === 'avoid'
+      ? hasTriedEveryAvoidedType
+        ? avoidRepeatedHintTemplates
+        : avoidHintTemplates
+      : preferHintTemplates
   const template = pickRandom(templates, random)
 
   return template(recommendation.typeNames)

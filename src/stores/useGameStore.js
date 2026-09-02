@@ -155,8 +155,6 @@ export const useGameStore = defineStore('game', () => {
   function updateHintsAfterIncorrectGuess() {
     if (!showTextHints.value || !isGamePlaying.value) return
 
-    if (remainingAttacks.value === 1) updateAttackHint()
-
     const guessHintTriggerCount = Math.floor(guessLimit.value / 2)
     if (
       guessLimit.value > 1 &&
@@ -165,6 +163,7 @@ export const useGameStore = defineStore('game', () => {
     ) {
       guessHintText.value = createGuessHintText({
         possibleCombinations: possibleTypeCombinations.value,
+        previouslyGuessedTypeNames: guessHistory.value.flatMap((guessRecord) => guessRecord.types),
       })
     }
   }
@@ -208,9 +207,8 @@ export const useGameStore = defineStore('game', () => {
     lastAttack.value = result
     lastAction.value = { kind: 'attack', ...result }
     attackHistory.value.push(result)
-    attackHintText.value = null
 
-    if (showTextHints.value && remainingGuesses.value === 1 && remainingAttacks.value > 0) {
+    if (showTextHints.value && remainingAttacks.value === 1) {
       updateAttackHint()
     }
 

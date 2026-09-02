@@ -5,7 +5,7 @@ import pluginVue from 'eslint-plugin-vue'
 
 export default [
   {
-    ignores: ['dist/**', 'node_modules/**'],
+    ignores: ['artifacts/**', 'cordova/**', 'dist/**', 'node_modules/**'],
   },
   eslint.configs.recommended,
   ...pluginVue.configs['flat/recommended'],

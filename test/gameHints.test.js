@@ -145,6 +145,28 @@ test('猜测提示能够随机选择多个不可能属性', () => {
   )
 })
 
+test('排除属性提示只在玩家已猜过全部相关属性时使用“再”', () => {
+  const options = {
+    possibleCombinations: [['Fire']],
+    typeNames: ['Fire', 'Ice'],
+  }
+
+  const untriedHint = createGuessHintText({
+    ...options,
+    random: createSequenceRandom(0.1, 0.1, 0, 0.99),
+  })
+  const retriedHint = createGuessHintText({
+    ...options,
+    previouslyGuessedTypeNames: ['Ice'],
+    random: createSequenceRandom(0.1, 0.1, 0, 0),
+  })
+
+  assert.match(untriedHint, /【冰】/)
+  assert.doesNotMatch(untriedHint, /再|已经猜过|已经试过/)
+  assert.match(retriedHint, /【冰】/)
+  assert.match(retriedHint, /再|已经猜过|已经试过/)
+})
+
 test('高概率多属性提示应用包含边界的 70% 门槛', () => {
   const possibleCombinations = [
     ['Fire'],
@@ -182,64 +204,53 @@ test('高概率多属性提示应用包含边界的 70% 门槛', () => {
   })
 })
 
-test('错误猜测发生且攻击次数剩余一次时生成攻击提示，攻击后清除', () => {
+test('倒数第二次攻击后生成攻击提示，并持续到游戏结束', () => {
   const store = startGameStore({ attackLimit: 3, guessLimit: 3 })
   store.attack('Normal')
-  store.submitGuess(['Fire'])
-
   assert.equal(store.attackHintText, null)
 
   store.attack('Fighting')
-  const result = store.submitGuess(['Grass'])
-
-  assert.equal(result.isCorrect, false)
   assert.equal(typeof store.attackHintText, 'string')
   assert.doesNotMatch(store.attackHintText, /【一般】|【格斗】/)
   assert.equal(store.remainingAttacks, 1)
-  assert.equal(store.attack('Grass')?.typeName, 'Grass')
-  assert.equal(store.attackHintText, null)
-})
+  const hintText = store.attackHintText
 
-test('猜测次数只剩一次时，攻击后根据最新记录生成下一次攻击提示', () => {
-  const store = startGameStore({ attackLimit: 3, guessLimit: 3 })
   store.submitGuess(['Fire'])
-  store.submitGuess(['Grass'])
-
-  assert.equal(store.remainingGuesses, 1)
-  assert.equal(store.attackHintText, null)
-
-  store.attack('Normal')
-  assert.equal(store.remainingAttacks, 2)
-  assert.equal(typeof store.attackHintText, 'string')
-  assert.doesNotMatch(store.attackHintText, /【一般】/)
-
-  store.attack('Fighting')
-  assert.equal(store.remainingAttacks, 1)
-  assert.equal(typeof store.attackHintText, 'string')
-  assert.doesNotMatch(store.attackHintText, /【一般】|【格斗】/)
+  assert.equal(store.attackHintText, hintText)
 
   store.attack('Grass')
   assert.equal(store.remainingAttacks, 0)
+  assert.equal(store.attackHintText, hintText)
+
+  store.submitGuess(['Grass'])
+  assert.equal(store.attackHintText, hintText)
+  store.submitGuess(['Ice'])
+  assert.equal(store.gameStatus, 'lost')
   assert.equal(store.attackHintText, null)
 })
 
-test('猜测次数多于一次或关闭文字提示时，攻击后不补充攻击提示', () => {
+test('攻击提示与猜测次数无关，关闭文字提示时不生成', () => {
   const normalStore = startGameStore({ attackLimit: 3, guessLimit: 3 })
-  normalStore.submitGuess(['Fire'])
   normalStore.attack('Normal')
-  assert.equal(normalStore.remainingGuesses, 2)
   assert.equal(normalStore.attackHintText, null)
+  normalStore.attack('Fighting')
+  assert.equal(typeof normalStore.attackHintText, 'string')
 
   const disabledStore = startGameStore({
     attackLimit: 3,
     guessLimit: 3,
     showTextHints: false,
   })
-  disabledStore.submitGuess(['Fire'])
-  disabledStore.submitGuess(['Grass'])
   disabledStore.attack('Normal')
-  assert.equal(disabledStore.remainingGuesses, 1)
+  disabledStore.attack('Fighting')
+  assert.equal(disabledStore.remainingAttacks, 1)
   assert.equal(disabledStore.attackHintText, null)
+})
+
+test('错误猜测不会补充或改写攻击提示', () => {
+  const store = startGameStore({ attackLimit: 3, guessLimit: 3 })
+  store.submitGuess(['Fire'])
+  assert.equal(store.attackHintText, null)
 })
 
 for (const [guessLimit, guessesBeforeHint] of [

@@ -170,17 +170,13 @@
           class="type-choice"
           :class="{
             'type-choice--selected': selectedAttackName === type.name,
-            'type-choice--disabled': gameStore.isAttackTypeUsed(type.name),
+            'type-choice--disabled': isAttackChoiceDisabled(type.name),
           }"
           :style="{ '--type-color': type.color }"
           type="button"
-          :disabled="gameStore.isAttackTypeUsed(type.name)"
+          :disabled="isAttackChoiceDisabled(type.name)"
           :aria-pressed="selectedAttackName === type.name"
-          :aria-label="
-            gameStore.isAttackTypeUsed(type.name)
-              ? `${type.nameCHS}属性，本局已使用`
-              : `${type.nameCHS}属性`
-          "
+          :aria-label="getAttackChoiceAriaLabel(type)"
           @click="selectedAttackName = type.name"
         >
           <TypeIcon :type="type" :size="20" />
@@ -520,6 +516,17 @@ function submitAttack() {
 
   const result = gameStore.attack(selectedAttackName.value)
   if (result) selectedAttackName.value = ''
+}
+
+function isAttackChoiceDisabled(typeName) {
+  return remainingAttacks.value === 0 || gameStore.isAttackTypeUsed(typeName)
+}
+
+function getAttackChoiceAriaLabel(type) {
+  if (gameStore.isAttackTypeUsed(type.name)) return `${type.nameCHS}属性，本局已使用`
+  if (remainingAttacks.value === 0) return `${type.nameCHS}属性，攻击次数已用尽`
+
+  return `${type.nameCHS}属性`
 }
 
 function toggleGuess(typeName) {
