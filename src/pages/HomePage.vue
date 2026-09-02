@@ -1,170 +1,3 @@
-<script setup>
-import { computed, ref } from 'vue'
-import { storeToRefs } from 'pinia'
-import {
-  Button as VanButton,
-  Radio as VanRadio,
-  RadioGroup as VanRadioGroup,
-  Popup as VanPopup,
-  Stepper as VanStepper,
-} from 'vant'
-import types from '../assets/json/types.json' with { type: 'json' }
-import TypeBadge from '../components/TypeBadge.vue'
-import TypeIcon from '../components/TypeIcon.vue'
-import { useGameStore } from '../stores/useGameStore'
-import { getAttackResultText } from '../utils/attackResultDisplay.js'
-import { getPossibleTypeCombinations } from '../utils/typePossibilities.js'
-
-const gameStore = useGameStore()
-const {
-  attackLimit,
-  guessLimit,
-  attackResultDisplayMode,
-  allowPossibleCombinations,
-  attackCount,
-  guessCount,
-  hiddenDefenseTypes,
-  attackHistory,
-  guessHistory,
-  lastAttack,
-  lastAction,
-  gameEndReason,
-  gameStatus,
-  isGamePlaying,
-  isGameFinished,
-  remainingAttacks,
-  remainingGuesses,
-} = storeToRefs(gameStore)
-
-const selectedAttackName = ref('')
-const selectedGuessNames = ref([])
-const isPossibleCombinationsVisible = ref(false)
-const typeByName = new Map(types.map((type) => [type.name, type]))
-const gridTypeNames = [
-  'Normal',
-  'Flying',
-  'Fire',
-  'Psychic',
-  'Water',
-  'Bug',
-  'Electric',
-  'Rock',
-  'Grass',
-  'Ghost',
-  'Ice',
-  'Dragon',
-  'Fighting',
-  'Dark',
-  'Poison',
-  'Steel',
-  'Ground',
-  'Fairy',
-]
-const gridTypes = gridTypeNames.map((typeName) => typeByName.get(typeName))
-
-const selectedAttack = computed(() => typeByName.get(selectedAttackName.value) ?? null)
-const selectedGuessTypes = computed(() =>
-  selectedGuessNames.value.map((typeName) => typeByName.get(typeName)),
-)
-const possibleTypeCombinations = computed(() =>
-  getPossibleTypeCombinations(attackHistory.value, guessHistory.value),
-)
-const possibleSingleTypeCombinations = computed(() =>
-  possibleTypeCombinations.value.filter((combination) => combination.length === 1),
-)
-const possibleDualTypeCombinations = computed(() =>
-  possibleTypeCombinations.value.filter((combination) => combination.length === 2),
-)
-const canSubmitAttack = computed(
-  () => isGamePlaying.value && Boolean(selectedAttack.value) && remainingAttacks.value > 0,
-)
-const canSubmitGuess = computed(
-  () => isGamePlaying.value && selectedGuessNames.value.length > 0 && remainingGuesses.value > 0,
-)
-const statusTitle = computed(() => {
-  if (gameStatus.value === 'won') return '猜对了！'
-  if (gameStatus.value === 'lost') return '本局结束'
-  if (lastAction.value?.kind === 'guess') return `第${guessCount.value}次猜测未命中`
-  if (lastAction.value?.kind === 'attack') return `第${attackCount.value}回合攻击完成`
-  if (isGamePlaying.value) return '正在分析属性组合'
-  return '准备开始挑战'
-})
-const statusDescription = computed(() => {
-  if (gameStatus.value === 'won') return '你成功锁定了隐藏的防御属性组合。'
-  if (gameStatus.value === 'lost') {
-    return gameEndReason.value === 'abandoned'
-      ? '你已放弃本局，答案已揭晓。'
-      : '次数已用尽，答案已揭晓。'
-  }
-  if (lastAction.value?.kind === 'guess') return '继续分析倍率，或调整属性组合后再次猜测。'
-  if (lastAction.value?.kind === 'attack') return '攻击结果已记录，你可以继续攻击或提交猜测。'
-  if (isGamePlaying.value) return '选择一种攻击属性，观察它对隐藏组合造成的倍率。'
-  return '设定本局次数后，系统会随机生成一个隐藏属性组合。'
-})
-
-function resetSelections() {
-  selectedAttackName.value = ''
-  selectedGuessNames.value = []
-  isPossibleCombinationsVisible.value = false
-}
-
-function startGame() {
-  resetSelections()
-  gameStore.initGame()
-}
-
-function submitAttack() {
-  if (!canSubmitAttack.value) return
-
-  gameStore.attack(selectedAttackName.value)
-  selectedAttackName.value = ''
-}
-
-function toggleGuess(typeName) {
-  if (!isGamePlaying.value) return
-
-  const selectedIndex = selectedGuessNames.value.indexOf(typeName)
-  if (selectedIndex >= 0) {
-    selectedGuessNames.value.splice(selectedIndex, 1)
-    return
-  }
-
-  if (selectedGuessNames.value.length < 2) selectedGuessNames.value.push(typeName)
-}
-
-function submitGuess() {
-  if (!canSubmitGuess.value) return
-
-  gameStore.submitGuess(selectedGuessNames.value)
-  selectedGuessNames.value = []
-}
-
-function abandonGame() {
-  resetSelections()
-  gameStore.abandonGame()
-}
-
-function exitGame() {
-  resetSelections()
-  gameStore.exitGame()
-}
-
-function getType(typeName) {
-  return typeByName.get(typeName)
-}
-
-function formatMultiplier(multiplier) {
-  return `${multiplier}×`
-}
-
-function getAttackRecordStyle(typeName) {
-  return {
-    '--record-color': getType(typeName).color,
-    backgroundColor: `${getType(typeName).color}`,
-  }
-}
-</script>
-
 <template>
   <section class="home-page" aria-labelledby="game-title">
     <header class="game-hero">
@@ -182,7 +15,7 @@ function getAttackRecordStyle(typeName) {
       <div class="limit-grid">
         <label class="limit-field" for="attack-limit">
           <span>攻击次数</span>
-          <VanStepper id="attack-limit" v-model="attackLimit" :min="1" :max="99" />
+          <VanStepper id="attack-limit" v-model="attackLimit" :min="3" :max="99" />
         </label>
         <label class="limit-field" for="guess-limit">
           <span>猜测次数</span>
@@ -450,3 +283,170 @@ function getAttackRecordStyle(typeName) {
     </VanPopup>
   </section>
 </template>
+
+<script setup>
+import { computed, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import {
+  Button as VanButton,
+  Radio as VanRadio,
+  RadioGroup as VanRadioGroup,
+  Popup as VanPopup,
+  Stepper as VanStepper,
+} from 'vant'
+import types from '../assets/json/types.json' with { type: 'json' }
+import TypeBadge from '../components/TypeBadge.vue'
+import TypeIcon from '../components/TypeIcon.vue'
+import { useGameStore } from '../stores/useGameStore'
+import { getAttackResultText } from '../utils/attackResultDisplay.js'
+import { getPossibleTypeCombinations } from '../utils/typePossibilities.js'
+
+const gameStore = useGameStore()
+const {
+  attackLimit,
+  guessLimit,
+  attackResultDisplayMode,
+  allowPossibleCombinations,
+  attackCount,
+  guessCount,
+  hiddenDefenseTypes,
+  attackHistory,
+  guessHistory,
+  lastAttack,
+  lastAction,
+  gameEndReason,
+  gameStatus,
+  isGamePlaying,
+  isGameFinished,
+  remainingAttacks,
+  remainingGuesses,
+} = storeToRefs(gameStore)
+
+const selectedAttackName = ref('')
+const selectedGuessNames = ref([])
+const isPossibleCombinationsVisible = ref(false)
+const typeByName = new Map(types.map((type) => [type.name, type]))
+const gridTypeNames = [
+  'Normal',
+  'Flying',
+  'Fire',
+  'Psychic',
+  'Water',
+  'Bug',
+  'Electric',
+  'Rock',
+  'Grass',
+  'Ghost',
+  'Ice',
+  'Dragon',
+  'Fighting',
+  'Dark',
+  'Poison',
+  'Steel',
+  'Ground',
+  'Fairy',
+]
+const gridTypes = gridTypeNames.map((typeName) => typeByName.get(typeName))
+
+const selectedAttack = computed(() => typeByName.get(selectedAttackName.value) ?? null)
+const selectedGuessTypes = computed(() =>
+  selectedGuessNames.value.map((typeName) => typeByName.get(typeName)),
+)
+const possibleTypeCombinations = computed(() =>
+  getPossibleTypeCombinations(attackHistory.value, guessHistory.value),
+)
+const possibleSingleTypeCombinations = computed(() =>
+  possibleTypeCombinations.value.filter((combination) => combination.length === 1),
+)
+const possibleDualTypeCombinations = computed(() =>
+  possibleTypeCombinations.value.filter((combination) => combination.length === 2),
+)
+const canSubmitAttack = computed(
+  () => isGamePlaying.value && Boolean(selectedAttack.value) && remainingAttacks.value > 0,
+)
+const canSubmitGuess = computed(
+  () => isGamePlaying.value && selectedGuessNames.value.length > 0 && remainingGuesses.value > 0,
+)
+const statusTitle = computed(() => {
+  if (gameStatus.value === 'won') return '猜对了！'
+  if (gameStatus.value === 'lost') return '本局结束'
+  if (lastAction.value?.kind === 'guess') return `第${guessCount.value}次猜测未命中`
+  if (lastAction.value?.kind === 'attack') return `第${attackCount.value}回合攻击完成`
+  if (isGamePlaying.value) return '正在分析属性组合'
+  return '准备开始挑战'
+})
+const statusDescription = computed(() => {
+  if (gameStatus.value === 'won') return '你成功锁定了隐藏的防御属性组合。'
+  if (gameStatus.value === 'lost') {
+    return gameEndReason.value === 'abandoned'
+      ? '你已放弃本局，答案已揭晓。'
+      : '次数已用尽，答案已揭晓。'
+  }
+  if (lastAction.value?.kind === 'guess') return '继续分析倍率，或调整属性组合后再次猜测。'
+  if (lastAction.value?.kind === 'attack') return '攻击结果已记录，你可以继续攻击或提交猜测。'
+  if (isGamePlaying.value) return '选择一种攻击属性，观察它对隐藏组合造成的倍率。'
+  return '设定本局次数后，系统会随机生成一个隐藏属性组合。'
+})
+
+function resetSelections() {
+  selectedAttackName.value = ''
+  selectedGuessNames.value = []
+  isPossibleCombinationsVisible.value = false
+}
+
+function startGame() {
+  resetSelections()
+  gameStore.initGame()
+}
+
+function submitAttack() {
+  if (!canSubmitAttack.value) return
+
+  gameStore.attack(selectedAttackName.value)
+  selectedAttackName.value = ''
+}
+
+function toggleGuess(typeName) {
+  if (!isGamePlaying.value) return
+
+  const selectedIndex = selectedGuessNames.value.indexOf(typeName)
+  if (selectedIndex >= 0) {
+    selectedGuessNames.value.splice(selectedIndex, 1)
+    return
+  }
+
+  if (selectedGuessNames.value.length < 2) selectedGuessNames.value.push(typeName)
+}
+
+function submitGuess() {
+  if (!canSubmitGuess.value) return
+
+  gameStore.submitGuess(selectedGuessNames.value)
+  selectedGuessNames.value = []
+}
+
+function abandonGame() {
+  resetSelections()
+  gameStore.abandonGame()
+}
+
+function exitGame() {
+  resetSelections()
+  gameStore.exitGame()
+}
+
+function getType(typeName) {
+  return typeByName.get(typeName)
+}
+
+function formatMultiplier(multiplier) {
+  return `${multiplier}×`
+}
+
+function getAttackRecordStyle(typeName) {
+  return {
+    '--record-color': getType(typeName).color,
+    backgroundColor: `${getType(typeName).color}`,
+  }
+}
+</script>
